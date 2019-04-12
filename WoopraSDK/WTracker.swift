@@ -6,6 +6,8 @@
 //  Copyright © 2017 Woopra. All rights reserved.
 //
 
+import Foundation
+
 public class WTracker: WPropertiesContainer {
     
     // MARK: - Public properties
@@ -38,7 +40,9 @@ public class WTracker: WPropertiesContainer {
     // MARK: - Private properties
     private let wEventEndpoint = "https://www.woopra.com/track/ce/"
     private var wPinger: WPinger?
-    
+
+    public var additionalHTTPHeaders: [String: String] = [:]
+
     // MARK: - Shared instance
     public static let shared: WTracker = {
         let instance = WTracker()
@@ -82,7 +86,6 @@ public class WTracker: WPropertiesContainer {
             NSURLQueryItem(name: "response", value: "xml"),
             NSURLQueryItem(name: "timeout", value: Int(idleTimeout * 1000).description)
         ]
-        
         if let referer = referer {
             queryItems.append(NSURLQueryItem(name: "referer", value: referer))
         }
@@ -114,7 +117,12 @@ public class WTracker: WPropertiesContainer {
         let requestUrl = components?.url
         
         if let url = requestUrl {
-            let request = URLRequest(url: url)
+            var request = URLRequest(url: url)
+
+            for (key, value) in additionalHTTPHeaders {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+
             let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
                 #if DEBUG
                 // check for errors
